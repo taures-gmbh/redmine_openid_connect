@@ -7,6 +7,12 @@ module RedmineOpenidConnect
         else
           url = url_for(:controller => params[:controller], :action => params[:action], :id => params[:id], :project_id => params[:project_id])
         end
+        # this should fix infinite redirect
+        # because this plugin not reseting session when assigning logged user
+        # it should at least reset session when expired so it will not check every time
+        # which will cause infinite redirect
+        # also clean lingering oic sessio so that back_url still works
+        reset_session
         session[:remember_url] = url
       end
       return super unless (OicSession.enabled? && !OicSession.login_selector?)
@@ -20,7 +26,8 @@ module RedmineOpenidConnect
 
     # set the current user _without_ resetting the session first
     def logged_user=(user)
-      return super(user) unless OicSession.enabled?
+      # only override parent if the request is from ioc user
+      return super(user) unless session[:oic_session_id]
 
       if user && user.is_a?(User)
         User.current = user
@@ -31,3 +38,4 @@ module RedmineOpenidConnect
     end
   end # ApplicationControllerPatch
 end
+
