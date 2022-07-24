@@ -82,13 +82,19 @@ module RedmineOpenidConnect
         oic_session.get_access_token!
         user_info = oic_session.get_user_info!
 
+        # check allowed domains
+        unless allowed_domain_for?(user_info["email"])
+          return invalid_credentials
+        end
+
         # verify application authorization
         unless oic_session.authorized?
           return invalid_credentials
         end
 
         # Check if there's already an existing user
-        user = User.find_by_mail(user_info["email"])
+        user = User.find_by_login(parse_email(user_info["email"])[:login])
+        # user = User.find_by_mail(user_info["email"])
 
         if user.nil?
           if !OicSession.create_user_if_not_exists?
@@ -102,7 +108,8 @@ module RedmineOpenidConnect
 
           user = User.new
 
-          user.login = user_info["user_name"] || user_info["nickname"] || user_info["preferred_username"]
+          user.login = parse_email(user_info["email"])[:login] || user_info["preferred_username"]
+          user.login ||= [user_info["given_name"], user_info.["family_name"]]*"."
 
           firstname = user_info["given_name"]
           lastname = user_info["family_name"]
