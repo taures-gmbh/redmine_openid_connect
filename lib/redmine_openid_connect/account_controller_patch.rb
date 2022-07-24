@@ -83,7 +83,7 @@ module RedmineOpenidConnect
         user_info = oic_session.get_user_info!
 
         # check allowed domains
-        unless allowed_domain_for?(user_info["email"])
+        unless oic_session.allowed_domain_for?
           return invalid_credentials
         end
 
@@ -93,7 +93,7 @@ module RedmineOpenidConnect
         end
 
         # Check if there's already an existing user
-        user = User.find_by_login(parse_email(user_info["email"])[:login])
+        user = User.find_by_login(oic_session.parse_email(user_info["email"])[:login])
         # user = User.find_by_mail(user_info["email"])
 
         if user.nil?
@@ -108,8 +108,8 @@ module RedmineOpenidConnect
 
           user = User.new
 
-          user.login = parse_email(user_info["email"])[:login] || user_info["preferred_username"]
-          user.login ||= [user_info["given_name"], user_info.["family_name"]]*"."
+          user.login = oic_session.parse_email(user_info["email"])[:login] || user_info["preferred_username"]
+          user.login ||= [user_info["given_name"], user_info["family_name"]]*"."
 
           firstname = user_info["given_name"]
           lastname = user_info["family_name"]

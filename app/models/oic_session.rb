@@ -158,6 +158,19 @@ class OicSession < ActiveRecord::Base
 
     return false
   end
+  
+  def parse_email email
+    email_data = email && email.is_a?(String) ? email.match(/(.*?)@(.*)/) : nil
+    return {:login => email_data[1], :domain => email_data[2]} if email_data
+  end
+  
+  def allowed_domain_for?
+    allowed_domains = client_config['allowed_domains']
+    return unless allowed_domains
+    allowed_domains = allowed_domains.split
+    return true if allowed_domains.empty?
+    allowed_domains.index(self.parse_email(user["email"])[:domain])
+  end
 
   def admin?
     if client_config['admin_group'].present?
