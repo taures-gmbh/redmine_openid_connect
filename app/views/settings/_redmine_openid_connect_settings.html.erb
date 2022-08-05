@@ -94,4 +94,13 @@
     <small>Allow the users to select if they login with their Redmine account or using OpenID</small>
   </p>
 
+  <p>
+    <label><%= t('config.disallowed_auth_sources_login') %></label>
+    <%= select_tag 'settings[disallowed_auth_sources_login]', options_for_select(AuthSource.all.map { |a| [a.name, a.id] }, OicSession.disallowed_auth_sources_login), :multiple => true, :include_blank => true, :size => 5 %>
+  </p>
+
+  <p>
+    <label><%= t('config.allowed_domains') %></label>
+    <%= text_area_tag 'settings[allowed_domains]', @settings[:allowed_domains], :rows => 5 %>
+  </p>
 </fieldset>
